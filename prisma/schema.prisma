@@ -1,0 +1,1879 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  affiliateOrganizationId String?
+
+  confirmationToken String?
+  tokenExpiresAt    DateTime?
+  confirmedAt       DateTime?
+
+  name String
+  type UserType @default(user)
+
+  role   Roles? @relation(fields: [roleId], references: [id])
+  roleId Int?
+
+  organizations UserOrganization[]
+
+  allowedActions         AllowedAction[]
+  onlyAllowPOS           Boolean                @default(false)
+  hasLimitedSubOrgAccess Boolean                @default(false)
+  Cashier                Cashier[]
+  openedCashiers         Cashier[]              @relation("openedBy")
+  ErrorLog               ErrorLog[]
+  Expense                Expense[]
+  Invitation             Invitation[]
+  invoiceReceipts        InvoiceReceipt[]
+  merchandiseReceipt     InvoiceReceipt[]       @relation("personWhoReceivedTheMerchandise")
+  InvoiceSelection       InvoiceSelection[]
+  LegalInvoice           LegalInvoice[]
+  LegalInvoiceRemision   LegalInvoiceRemision[]
+  LegalPosInvoice        LegalPosInvoice[]
+  OwnedOrganization      Organization?          @relation("owner")
+  Purchase               Purchase[]
+  PurchaseInvoice        PurchaseInvoice[]
+  PurchaseRemision       PurchaseRemision[]
+  QuoteInvoice           QuoteInvoice[]
+  allowedSubOrgs         SubOrganization[]      @relation("SubOrganizationToUser")
+  LegalCreditNote        LegalCreditNote[]
+}
+
+enum UserType {
+  user
+  accountant
+}
+
+model UserOrganization {
+  userId         Int
+  user           User         @relation(fields: [userId], references: [id])
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@id([userId, organizationId]) // Composite primary key
+  @@unique([userId, organizationId]) // Ensure unique combination of userId and organizationId
+}
+
+model Organization {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  affiliateId String?  @unique
+
+  soenacToken        String?
+  payrollSoftwareId  String?
+  payrollSoftwarePin String?
+  payrollTestSetId   String?
+  softwareId         String?
+  testSetId          String?
+  lastNumeration     Int?
+
+  posSoftwareId String?
+  posTestSetId  String?
+
+  certificateInBase64 String?
+  certificatePassword String?
+
+  name                       String
+  tradeName                  String                     @default("")
+  email                      String
+  imageUri                   String?
+  idNumber                   String?
+  tel                        String?
+  phone                      String?
+  ciius                      String[]
+  merchantRegistration       String                     @default("")
+  taxDetail                  taxDetail                  @default(iva)
+  typeRegime                 typeRegime                 @default(iva)
+  typeLiability              typeLiability              @default(noLiability)
+  typeOrganization           typeOrganization           @default(natural)
+  typeDocumentIdentification typeDocumentIdentification @default(nit)
+  type                       VillingOrganizationType    @default(normal)
+  payrollFrequency           String                     @default("Mensual")
+
+  address                   String?
+  country                   Country @default(col)
+  municipalityId            Int     @default(1)
+  showCompanyInfoInRemision Boolean @default(false)
+
+  textInInvoice String?
+  website       String?
+
+  customPlanAmount Int?
+  planExpiresAt    DateTime?
+  planType         PlanType  @default(free)
+
+  hasCompletedSettingsStep   Boolean @default(false)
+  hasCompletedProductStep    Boolean @default(false)
+  hasCompletedClientStep     Boolean @default(false)
+  hasCompletedResolutionStep Boolean @default(false)
+
+  applyDiscountToTotalInPos Boolean @default(false)
+  updatePricesOnPurchases   Boolean @default(false)
+
+  ownerId                 Int            @unique
+  owner                   User           @relation("owner", fields: [ownerId], references: [id])
+  affiliateOrganizationId Int?
+  affiliateOrganization   Organization?  @relation("AffiliateOrganization", fields: [affiliateOrganizationId], references: [id])
+  affiliatedOrganizations Organization[] @relation("AffiliateOrganization")
+
+  members               UserOrganization[]
+  currentPaymentLinkUrl String?
+
+  Brand                 Brand[]
+  Cashier               Cashier[]
+  Category              Category[]
+  Client                Client[]
+  Counts                Counts[]
+  CreditNote            CreditNote[]
+  DebitNote             DebitNote[]
+  ErrorLog              ErrorLog[]
+  expensesCagegories    ExpenseCategory[]
+  Image                 Image[]
+  InventoryPriceSetting InventoryPriceSetting[]
+  InventorySetting      InventorySetting[]
+  Invitation            Invitation[]
+  InvoiceReceipt        InvoiceReceipt[]
+  LegalInvoice          LegalInvoice[]
+  legalInvoiceRemisions LegalInvoiceRemision[]
+  LegalPosInvoice       LegalPosInvoice[]
+  OrganizationDianData  OrganizationDianData[]
+  payments              PaymentPlan[]
+  PriceList             PriceList[]
+  Product               Product[]
+  Purchase              Purchase[]
+  PurchaseInvoice       PurchaseInvoice[]
+  PurchaseRemision      PurchaseRemision[]
+  QuoteInvoice          QuoteInvoice[]
+  Resolution            Resolution[]
+  ResolutionRequest     ResolutionRequest[]
+  Roles                 Roles[]
+  Store                 Store?
+  SubOrganization       SubOrganization[]
+  Supplier              Supplier[]
+  paymentAgreements     PaymentAgreement[]
+  StockValue            StockValue[]
+  PriceValue            PriceValue[]
+  Employee              Employee[]
+  PayrollTemplate       PayrollTemplate[]
+  PayrollEmployee       PayrollEmployee[]
+  Payroll               Payroll[]
+  PayrollEmission       PayrollEmission[]
+  payrollConcepts       PayrollConcept[]
+  LegalCreditNote       LegalCreditNote[]
+  paymentLinks          PaymentLinks[]
+}
+
+enum Country {
+  col
+  ven
+}
+
+model OrganizationDianData {
+  id                         Int          @id
+  createdAt                  DateTime     @default(now())
+  updatedAt                  DateTime     @updatedAt
+  organizationId             Int
+  soenacToken                String?
+  certificateInBase64        String?
+  certificatePassword        String?
+  camaraFileKey              String?
+  cedulaFileKey              String?
+  comprobanteFileKey         String?
+  rutFileKey                 String?
+  certificateEmailSent       Boolean      @default(false)
+  soenacComprobanteFileKey   String?
+  lastNumeration             Int?
+  softwareId                 String?
+  testSetId                  String?
+  wereExampleInvoicesCreated Boolean      @default(false)
+  wasEnvUpdated              Boolean      @default(false)
+  organization               Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model PaymentPlan {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  description String
+  amount      Float
+  type        PlanType
+  nextPayment DateTime
+
+  paymentLinkId String?
+  paymentLink   PaymentLinks? @relation(fields: [paymentLinkId], references: [id])
+
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id])
+}
+
+model Invitation {
+  id         Int       @id @default(autoincrement())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  expiresAt  DateTime  @default(now())
+  acceptedAt DateTime?
+
+  name  String   @default("")
+  email String
+  type  UserType @default(user)
+
+  token String? @unique
+
+  userId         Int?
+  user           User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  roleId         Int?
+  role           Roles?       @relation(fields: [roleId], references: [id])
+
+  allowedSubOrgs SubOrganization[]
+}
+
+model SubOrganization {
+  id                   Int                    @id @default(autoincrement())
+  organizationId       Int
+  name                 String
+  initialBalance       Float?
+  tel                  String?
+  deletedAt            DateTime?
+  invitationId         Int?
+  createdAt            DateTime?              @default(now())
+  updatedAt            DateTime?              @updatedAt
+  defaultClientId      Int?
+  defaultPriceListId   Int?
+  defaultResolutionId  Int?
+  address              String                 @default("")
+  hideResolutionInfo   Boolean                @default(false)
+  nit                  String?
+  Cashier              Cashier[]
+  expenses             Expense[]
+  LegalInvoice         LegalInvoice[]
+  LegalInvoiceRemision LegalInvoiceRemision[]
+  LegalPosInvoice      LegalPosInvoice[]
+  Purchase             Purchase[]
+  PurchaseInvoice      PurchaseInvoice[]
+  PurchaseRemision     PurchaseRemision[]
+  QuoteInvoice         QuoteInvoice[]
+  StockValue           StockValue[]
+  Store                Store[]
+  defaultClient        Client?                @relation(fields: [defaultClientId], references: [id])
+  defaultPriceList     PriceList?             @relation(fields: [defaultPriceListId], references: [id])
+  defaultResolution    Resolution?            @relation(fields: [defaultResolutionId], references: [id])
+  Invitation           Invitation?            @relation(fields: [invitationId], references: [id])
+  organization         Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  users                User[]                 @relation("SubOrganizationToUser")
+  LegalCreditNote      LegalCreditNote[]
+  InventorySetting     InventorySetting[]
+
+  stockSettings InventorySetting[] @relation("transferTo")
+}
+
+model Store {
+  id                     String                 @id
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+  organizationId         Int                    @unique
+  name                   String
+  primaryColor           String?
+  secondaryColor         String?
+  priceListId            Int?
+  bannerObjectId         String?
+  logoObjectId           String?
+  subOrganizationId      Int?
+  bannerSubtitle         String?
+  bannerTitle            String?
+  whatsapp               String                 @default("")
+  stocksProductsBehavior stocksProductsBehavior @default(allow)
+  errorLogs              ErrorLog[]
+  Order                  Order[]
+  products               Product[]
+  organization           Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  priceList              PriceList?             @relation(fields: [priceListId], references: [id])
+  subOrganization        SubOrganization?       @relation(fields: [subOrganizationId], references: [id])
+}
+
+model Order {
+  id           Int            @id @default(autoincrement())
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  storeId      String
+  clientName   String
+  clientTel    String
+  clientMail   String
+  addressId    Int
+  totalAmount  Float          @default(0)
+  internalId   Int            @default(0)
+  notes        String?
+  address      Address        @relation(fields: [addressId], references: [id])
+  store        Store          @relation(fields: [storeId], references: [id])
+  OrderProduct OrderProduct[]
+}
+
+model OrderProduct {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orderId   Int
+  name      String
+  price     Float
+  quantity  Int
+  productId Int?
+  cost      Float    @default(0)
+  order     Order    @relation(fields: [orderId], references: [id])
+  product   Product? @relation(fields: [productId], references: [id])
+}
+
+model PriceList {
+  id             Int      @id @default(autoincrement())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  name           String
+  organizationId Int
+
+  deletedAt DateTime?
+
+  Client                Client[]
+  InventoryPriceSetting InventoryPriceSetting[]
+  organization          Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  PriceValue            PriceValue[]
+  Store                 Store[]
+  SubOrganization       SubOrganization[]
+}
+
+model Category {
+  id             Int          @id @default(autoincrement())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organizationId Int
+  name           String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  Product        Product[]
+}
+
+model Brand {
+  id             Int          @id @default(autoincrement())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organizationId Int
+  name           String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  Product        Product[]
+}
+
+model Product {
+  id         Int      @id @default(autoincrement())
+  uuid       String?  @unique
+  internalId Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  name        String
+  description String?
+
+  price     Float
+  tax       Int      @default(0)
+  reference String?
+  barCodes  String[]
+
+  transactionId  String?
+  imagesUrl      String[]
+  batch          String?
+  expirationDate DateTime?
+  invimaRegistry String?
+
+  images Image[]
+  prices PriceValue[]
+  stocks StockValue[]
+
+  brandId        Int?
+  brand          Brand?       @relation(fields: [brandId], references: [id])
+  categoryId     Int?
+  category       Category?    @relation(fields: [categoryId], references: [id])
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  storeId        String?
+  Store          Store?       @relation(fields: [storeId], references: [id])
+
+  OrderProduct                 OrderProduct[]
+  InventoryPriceSettingProduct InventoryPriceSettingProduct[]
+  InventorySettingProduct      InventorySettingProduct[]
+  LegalInvoiceProduct          LegalInvoiceProduct[]
+  CartItem                     CartItem[]
+
+  @@index([organizationId, name])
+}
+
+model Image {
+  id             String       @id
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  name           String?
+  description    String?
+  fileName       String
+  organizationId Int
+  productId      Int?
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  Product        Product?     @relation(fields: [productId], references: [id])
+}
+
+model PriceValue {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  value     Float
+
+  productId Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  priceListId    Int
+  priceList      PriceList    @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model StockValue {
+  id             Int             @id @default(autoincrement())
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  value          Float
+  organizationId Int
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  productId      Int
+  subOrgId       Int
+  product        Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  subOrg         SubOrganization @relation(fields: [subOrgId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model Cashier {
+  id         Int       @id @default(autoincrement())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  closedAt   DateTime?
+  internalId Int       @default(0)
+
+  rateOfTheDay   Float   @default(0)
+  initialBalance Float   @default(0)
+  totalTax       Float   @default(0)
+  notes          String?
+
+  totalByUserCash   Float @default(0)
+  totalBySystemCash Float @default(0)
+
+  totalByUserCard   Float @default(0)
+  totalBySystemCard Float @default(0)
+
+  totalByUserTransfer   Float @default(0)
+  totalBySystemTransfer Float @default(0)
+
+  totalCanceledIncome Float @default(0)
+  canceledSalesCount  Float @default(0)
+
+  totalByUserExpenses   Float @default(0)
+  totalBySystemExpenses Float @default(0)
+
+  totalByUserLoan   Float @default(0)
+  totalBySystemLoan Float @default(0)
+
+  organizationId    Int
+  organization      Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  subOrganizationId Int
+  subOrganization   SubOrganization   @relation(fields: [subOrganizationId], references: [id])
+  openedById        Int?
+  openedBy          User?             @relation("openedBy", fields: [openedById], references: [id])
+  closedById        Int?
+  closedBy          User?             @relation(fields: [closedById], references: [id])
+  Expense           Expense[]
+  sales             LegalPosInvoice[]
+  QuoteInvoice      QuoteInvoice[]
+}
+
+model Resolution {
+  id        Int       @id @default(autoincrement())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  name          String
+  prefix        String         @default("")
+  count         Int
+  type          ResolutionType
+  soenacId      String?        @unique @default(uuid())
+  enabledInDian Boolean        @default(false)
+
+  from Int? @default(0)
+  to   Int? @default(0)
+
+  fromDate       DateTime? @default(now())
+  toDate         DateTime? @default(now())
+  resolutionDate DateTime? @default(now())
+
+  technicalKey     String? @default("")
+  resolutionNumber String
+
+  status ResolutionStatus @default(active)
+
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  legalInvoices     LegalInvoice[]
+  legalPosInvoices  LegalPosInvoice[]
+  ResolutionRequest ResolutionRequest[]
+  SubOrganization   SubOrganization[]
+}
+
+model Client {
+  id         Int       @id @default(autoincrement())
+  internalId Int       @default(0)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  name           String
+  email          String
+  idNumber       String
+  retention      Float?
+  tel            String
+  maxCredit      Float  @default(0)
+  maxPaymentTerm Int    @default(0)
+
+  simpleAddress String @default("")
+  city          String @default("")
+  department    String @default("")
+
+  taxDetail                  taxDetail                  @default(iva)
+  typeDocumentIdentification typeDocumentIdentification @default(nit)
+  typeLiability              typeLiability              @default(noLiability)
+  typeOrganization           typeOrganization           @default(natural)
+  typeRegime                 typeRegime                 @default(iva)
+
+  isTemporary Boolean @default(false)
+
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  priceListId Int?
+  priceList   PriceList? @relation(fields: [priceListId], references: [id])
+
+  invoices          LegalInvoice[]
+  invoiceRemisions  LegalInvoiceRemision[]
+  posInvoices       LegalPosInvoice[]
+  quotes            QuoteInvoice[]
+  branches          SubOrganization[]
+  paymentAgreements PaymentAgreement[]
+  LegalCreditNote   LegalCreditNote[]
+}
+
+model Supplier {
+  id         Int       @id @default(autoincrement())
+  internalId Int
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  organizationId   Int
+  addressId        Int?
+  name             String
+  email            String
+  idNumber         String
+  retention        Float?
+  tel              String
+  maxCredit        Float              @default(0)
+  maxPaymentTerm   Int                @default(0)
+  simpleAddress    String             @default("")
+  invoiceReceipts  InvoiceReceipt[]
+  Purchase         Purchase[]
+  PurchaseInvoice  PurchaseInvoice[]
+  PurchaseRemision PurchaseRemision[]
+  address          Address?           @relation(fields: [addressId], references: [id])
+  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  PaymentAgreement PaymentAgreement[]
+}
+
+model LegalPosInvoice {
+  id                Int      @id @default(autoincrement())
+  internalId        Int
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  organizationId    Int
+  subOrganizationId Int
+  clientId          Int
+  resolutionId      Int
+  userId            Int
+  cashierId         Int
+
+  total         Float
+  subtotal      Float @default(0)
+  totalTax      Float
+  totalDiscount Float
+  totalRefunded Float @default(0)
+
+  // DIAN fields
+  dianId       String?
+  cude         String?
+  zipKey       String?
+  qrCode       String?
+  legalJson    Json?
+  prefix       String?
+  numeration   Int?
+  wasEmailSent Boolean @default(false)
+
+  notes                String?
+  internalNotes        String?
+  totalChange          Float     @default(0)
+  totalCollected       Float     @default(0)
+  canceledAt           DateTime?
+  isTaxIncluded        Boolean   @default(true)
+  applyDiscountToTotal Boolean   @default(false)
+
+  pending   Float            @default(0)
+  type      LegalInvoiceType @default(cash)
+  expiresAt DateTime?
+
+  products          LegalInvoiceProduct[]
+  cashier           Cashier                      @relation(fields: [cashierId], references: [id])
+  client            Client                       @relation(fields: [clientId], references: [id])
+  organization      Organization                 @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  resolution        Resolution                   @relation(fields: [resolutionId], references: [id])
+  subOrganization   SubOrganization              @relation(fields: [subOrganizationId], references: [id])
+  user              User                         @relation(fields: [userId], references: [id])
+  paymentForms      LegalPosInvoicePaymentForm[]
+  PosInvoicePayment PosInvoicePayment[]
+  LegalCreditNote   LegalCreditNote[]
+
+  @@index([createdAt, subOrganizationId, cashierId])
+}
+
+model LegalCreditNote {
+  id         String @id @default(uuid())
+  internalId Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  legalJson    Json?
+  cude         String?
+  zipKey       String?
+  wasEmailSent Boolean                 @default(false)
+  reason       PosCreditNoteCorrection @default(cancel)
+  prefix       String?
+  numeration   Int?
+  qrCode       String?
+
+  total         Float
+  subtotal      Float
+  totalTax      Float
+  totalDiscount Float
+
+  notes String?
+
+  products     LegalInvoiceProduct[]
+  paymentForms CreditNotePaymentForm[]
+
+  posId Int
+  pos   LegalPosInvoice @relation(fields: [posId], references: [id])
+
+  branchId       Int
+  branch         SubOrganization @relation(fields: [branchId], references: [id])
+  organizationId Int
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+  clientId       Int
+  client         Client          @relation(fields: [clientId], references: [id])
+  userId         Int
+  user           User            @relation(fields: [userId], references: [id])
+}
+
+enum PosCreditNoteCorrection {
+  refund
+  cancel
+  discount
+  price_adjustment
+  others
+}
+
+model LegalInvoice {
+  id                Int      @id @default(autoincrement())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  organizationId    Int
+  subOrganizationId Int
+  clientId          Int
+  resolutionId      Int
+  userId            Int
+  notes             String?
+  internalId        Int
+
+  cufe             String?
+  zipKey           String?
+  dianId           String  @unique
+  legalInvoiceJson Json?
+  wasEmailSent     Boolean @default(false)
+
+  total         Float @default(0)
+  subtotal      Float
+  totalTax      Float
+  totalDiscount Float
+
+  type    LegalInvoiceType @default(cash)
+  pending Float            @default(0)
+
+  expiresAt        DateTime?
+  isTaxIncluded    Boolean                   @default(false)
+  CreditNote       CreditNote[]
+  DebitNote        DebitNote[]
+  client           Client                    @relation(fields: [clientId], references: [id])
+  organization     Organization              @relation(fields: [organizationId], references: [id])
+  resolution       Resolution                @relation(fields: [resolutionId], references: [id])
+  subOrganization  SubOrganization           @relation(fields: [subOrganizationId], references: [id])
+  user             User                      @relation(fields: [userId], references: [id])
+  payments         LegalInvoicePayment[]
+  paymentForms     LegalInvoicePaymentForm[]
+  products         LegalInvoiceProduct[]
+  PaymentAgreement PaymentAgreement[]
+
+  @@index([createdAt, subOrganizationId])
+}
+
+model LegalInvoiceRemision {
+  id         Int @id @default(autoincrement())
+  internalId Int
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  canceledAt DateTime?
+
+  organizationId    Int
+  subOrganizationId Int
+  clientId          Int
+  userId            Int
+  notes             String?
+  pdfObjectId       String?
+  expiresAt         DateTime?
+
+  total         Float @default(0)
+  subtotal      Float
+  totalTax      Float
+  totalDiscount Float
+
+  pending Float            @default(0)
+  type    LegalInvoiceType @default(cash)
+
+  isTaxIncluded    Boolean                           @default(true)
+  payments         InvoiceRemisionPayment[]
+  products         LegalInvoiceProduct[]
+  client           Client                            @relation(fields: [clientId], references: [id])
+  organization     Organization                      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  subOrganization  SubOrganization                   @relation(fields: [subOrganizationId], references: [id])
+  user             User                              @relation(fields: [userId], references: [id])
+  paymentForms     LegalInvoiceRemisionPaymentForm[]
+  PaymentAgreement PaymentAgreement[]
+
+  @@index([createdAt, subOrganizationId])
+}
+
+model CreditNote {
+  id         Int      @id @default(autoincrement())
+  internalId Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  invoiceId  Int
+
+  total         Float @default(0)
+  subtotal      Float
+  totalTax      Float
+  totalDiscount Float
+
+  notes            String?
+  legalInvoiceJson Json?
+  cude             String?
+  zipKey           String?
+  pdfObjectId      String?
+  wasEmailSent     Boolean                   @default(false)
+  organizationId   Int
+  reason           creditNoteCorrectionsType @default(return)
+  isTaxIncluded    Boolean                   @default(false)
+  invoice          LegalInvoice              @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  organization     Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  paymentForms     CreditNotePaymentForm[]
+  products         LegalInvoiceProduct[]
+}
+
+model DebitNote {
+  id             Int      @id @default(autoincrement())
+  internalId     Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  invoiceId      Int
+  organizationId Int
+
+  total         Float @default(0)
+  subtotal      Float
+  totalTax      Float
+  totalDiscount Float
+
+  notes            String?
+  reason           debitNoteCorrectionsType @default(interest)
+  legalInvoiceJson Json?
+  cude             String?
+  zipKey           String?
+  pdfObjectId      String?
+  isTaxIncluded    Boolean                  @default(false)
+  invoice          LegalInvoice             @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  organization     Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  paymentForms     DebitNotePaymentForm[]
+  products         LegalInvoiceProduct[]
+}
+
+model LegalInvoicePaymentForm {
+  id             Int      @id @default(autoincrement())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  legalInvoiceId Int
+
+  type LegalInvoicePaymentMethod @default(cash)
+
+  amount       Float
+  notes        String?
+  legalInvoice LegalInvoice @relation(fields: [legalInvoiceId], references: [id], onDelete: Cascade)
+}
+
+model CreditNotePaymentForm {
+  id           Int      @id @default(autoincrement())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  creditNoteId Int
+
+  type LegalInvoicePaymentMethod @default(cash)
+
+  amount            Float
+  notes             String?
+  creditNote        CreditNote       @relation(fields: [creditNoteId], references: [id], onDelete: Cascade)
+  LegalCreditNote   LegalCreditNote? @relation(fields: [legalCreditNoteId], references: [id])
+  legalCreditNoteId String?
+}
+
+model DebitNotePaymentForm {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  debitNoteId Int
+
+  type LegalInvoicePaymentMethod @default(cash)
+
+  amount    Float
+  notes     String?
+  debitNote DebitNote @relation(fields: [debitNoteId], references: [id], onDelete: Cascade)
+}
+
+model LegalInvoiceRemisionPaymentForm {
+  id                     Int      @id @default(autoincrement())
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  legalInvoiceRemisionId Int
+
+  type LegalInvoicePaymentMethod @default(cash)
+
+  amount               Float
+  notes                String?
+  legalInvoiceRemision LegalInvoiceRemision @relation(fields: [legalInvoiceRemisionId], references: [id], onDelete: Cascade)
+}
+
+model Purchase {
+  id         Int @id @default(autoincrement())
+  internalId Int
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  canceledAt DateTime?
+
+  organizationId    Int
+  subOrganizationId Int
+  supplierId        Int
+  userId            Int
+
+  subtotal      Float @default(0)
+  total         Float
+  totalTax      Float
+  totalDiscount Float
+
+  notes          String?
+  internalNotes  String?
+  paidWithCash   Float     @default(0)
+  paidWithCredit Float     @default(0)
+  expiresAt      DateTime?
+  retention      Float     @default(0)
+  isTaxIncluded  Boolean   @default(true)
+  retentionJson  Json?
+  updatePrices   Boolean   @default(false)
+
+  products         LegalInvoiceProduct[]
+  organization     Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  subOrganization  SubOrganization       @relation(fields: [subOrganizationId], references: [id])
+  supplier         Supplier              @relation(fields: [supplierId], references: [id])
+  user             User                  @relation(fields: [userId], references: [id])
+  purchaseInvoice  PurchaseInvoice?
+  purchaseRemision PurchaseRemision?
+}
+
+model PurchaseRemision {
+  id         Int @id @default(autoincrement())
+  internalId Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  canceledAt DateTime?
+
+  organizationId    Int
+  subOrganizationId Int
+  supplierId        Int
+  userId            Int
+  purchaseId        Int? @unique
+
+  subtotal      Float @default(0)
+  total         Float
+  totalTax      Float
+  totalDiscount Float
+
+  notes             String?
+  internalNotes     String?
+  paidWithCash      Float     @default(0)
+  paidWithCredit    Float     @default(0)
+  externalInvoiceId String
+  receivedAt        DateTime? @default(now())
+  retention         Float     @default(0)
+  isTaxIncluded     Boolean   @default(true)
+  updatePrices      Boolean   @default(false)
+
+  pending   Float            @default(0)
+  type      LegalInvoiceType @default(cash)
+  expiresAt DateTime?
+
+  retentionJson   Json?
+  products        LegalInvoiceProduct[]
+  purchaseInvoice PurchaseInvoice?
+  organization    Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  purchase        Purchase?                 @relation(fields: [purchaseId], references: [id])
+  subOrganization SubOrganization           @relation(fields: [subOrganizationId], references: [id])
+  supplier        Supplier                  @relation(fields: [supplierId], references: [id])
+  user            User                      @relation(fields: [userId], references: [id])
+  payments        PurchaseRemisionPayment[]
+}
+
+model PurchaseInvoice {
+  id         Int @id @default(autoincrement())
+  internalId Int
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  expiresAt  DateTime?
+  canceledAt DateTime?
+
+  organizationId     Int
+  subOrganizationId  Int
+  supplierId         Int
+  userId             Int
+  purchaseId         Int? @unique
+  purchaseRemisionId Int? @unique
+
+  subtotal      Float @default(0)
+  total         Float
+  totalTax      Float
+  totalDiscount Float
+
+  notes          String?
+  internalNotes  String?
+  paidWithCredit Float   @default(0)
+  updatePrices   Boolean @default(false)
+
+  pending Float            @default(0)
+  type    LegalInvoiceType @default(cash)
+
+  externalInvoiceId String
+  receivedAt        DateTime?             @default(now())
+  retention         Float                 @default(0)
+  isTaxIncluded     Boolean               @default(true)
+  retentionJson     Json?
+  products          LegalInvoiceProduct[]
+  organization      Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  purchase          Purchase?             @relation(fields: [purchaseId], references: [id])
+  purchaseRemision  PurchaseRemision?     @relation(fields: [purchaseRemisionId], references: [id])
+  subOrganization   SubOrganization       @relation(fields: [subOrganizationId], references: [id])
+  supplier          Supplier              @relation(fields: [supplierId], references: [id])
+  user              User                  @relation(fields: [userId], references: [id])
+  payments          PurchasePayment[]
+  PaymentAgreement  PaymentAgreement[]
+}
+
+enum Currency {
+  COP
+  USD
+  VEF
+}
+
+model QuoteInvoice {
+  id                Int      @id @default(autoincrement())
+  internalId        Int
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  organizationId    Int
+  subOrganizationId Int
+  clientId          Int
+  userId            Int
+  cashierId         Int
+
+  total         Float
+  subtotal      Float @default(0)
+  totalTax      Float
+  totalDiscount Float
+
+  pending   Float            @default(0)
+  type      LegalInvoiceType @default(cash)
+  expiresAt DateTime?
+
+  notes           String                @default("")
+  isTaxIncluded   Boolean               @default(true)
+  products        LegalInvoiceProduct[]
+  cashier         Cashier               @relation(fields: [cashierId], references: [id])
+  client          Client                @relation(fields: [clientId], references: [id])
+  organization    Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  subOrganization SubOrganization       @relation(fields: [subOrganizationId], references: [id])
+  user            User                  @relation(fields: [userId], references: [id])
+}
+
+model LegalPosInvoicePaymentForm {
+  id                Int                       @id @default(autoincrement())
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  legalPosInvoiceId Int
+  amount            Float
+  notes             String?
+  type              LegalInvoicePaymentMethod @default(cash)
+  legalPosInvoice   LegalPosInvoice           @relation(fields: [legalPosInvoiceId], references: [id], onDelete: Cascade)
+
+  @@index([type])
+}
+
+model LegalInvoicePayment {
+  id             Int           @id @default(autoincrement())
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  legalInvoiceId Int
+  paymentMethod  PaymentMethod
+
+  type         LegalInvoicePaymentMethod @default(cash)
+  amount       Float
+  notes        String?
+  legalInvoice LegalInvoice              @relation(fields: [legalInvoiceId], references: [id], onDelete: Cascade)
+}
+
+model PosInvoicePayment {
+  id            Int           @id @default(autoincrement())
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  paymentMethod PaymentMethod
+  amount        Float
+  notes         String?
+
+  invoiceId Int
+  invoice   LegalPosInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+model InvoiceRemisionPayment {
+  id                Int                  @id @default(autoincrement())
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  invoiceRemisionId Int
+  paymentMethod     PaymentMethod
+  amount            Float
+  notes             String?
+  invoiceRemision   LegalInvoiceRemision @relation(fields: [invoiceRemisionId], references: [id], onDelete: Cascade)
+}
+
+model LegalInvoiceProduct {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  productId Int?
+  name      String
+  quantity  Float
+  price     Float
+  discount  Float
+  tax       Float
+  notes     String?
+
+  oldStock Float @default(0)
+  newStock Float @default(0)
+
+  legalPosInvoiceId      Int?
+  legalPosInvoice        LegalPosInvoice?      @relation(fields: [legalPosInvoiceId], references: [id])
+  legalInvoiceRemisionId Int?
+  LegalInvoiceRemision   LegalInvoiceRemision? @relation(fields: [legalInvoiceRemisionId], references: [id])
+  legalInvoiceId         Int?
+  legalInvoice           LegalInvoice?         @relation(fields: [legalInvoiceId], references: [id], onDelete: Cascade)
+
+  purchaseId         Int?
+  purchaseInvoiceId  Int?
+  purchaseRemisionId Int?
+  quoteInvoiceId     Int?
+  creditNoteId       Int?
+  debitNoteId        Int?
+  batch              String?
+  expirationDate     DateTime?
+  invimaRegistry     String?
+  cost               Float             @default(0)
+  CreditNote         CreditNote?       @relation(fields: [creditNoteId], references: [id])
+  DebitNote          DebitNote?        @relation(fields: [debitNoteId], references: [id])
+  product            Product?          @relation(fields: [productId], references: [id])
+  purchase           Purchase?         @relation(fields: [purchaseId], references: [id])
+  PurchaseInvoice    PurchaseInvoice?  @relation(fields: [purchaseInvoiceId], references: [id])
+  PurchaseRemision   PurchaseRemision? @relation(fields: [purchaseRemisionId], references: [id])
+  QuoteInvoice       QuoteInvoice?     @relation(fields: [quoteInvoiceId], references: [id])
+  LegalCreditNote    LegalCreditNote?  @relation(fields: [legalCreditNoteId], references: [id])
+  legalCreditNoteId  String?
+
+  @@index([cost, legalPosInvoiceId, legalInvoiceId, legalInvoiceRemisionId])
+}
+
+model PurchasePayment {
+  id                Int              @id @default(autoincrement())
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  paymentMethod     PaymentMethod
+  amount            Float
+  notes             String?
+  purchaseInvoiceId Int?
+  purchaseInvoice   PurchaseInvoice? @relation(fields: [purchaseInvoiceId], references: [id], onDelete: Cascade)
+}
+
+model PurchaseRemisionPayment {
+  id            Int           @id @default(autoincrement())
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  paymentMethod PaymentMethod
+  amount        Float
+  notes         String?
+
+  remisionId Int?
+  remision   PurchaseRemision? @relation(fields: [remisionId], references: [id], onDelete: Cascade)
+}
+
+model Address {
+  id               Int        @id @default(autoincrement())
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  street           String
+  city             String
+  state            String
+  country          String
+  zip              String?
+  ref              String?
+  complement       String?
+  departmentId     Int?       @default(2)
+  departmentName   String?    @default("Antioquia")
+  municipalityId   Int?       @default(1)
+  municipalityName String?    @default("Medellín")
+  orders           Order[]
+  suppliers        Supplier[]
+}
+
+model EmailLeads {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  email     String
+  phone     String?
+}
+
+model Counts {
+  id                          Int      @id
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+  productsCount               Int      @default(0)
+  employeesCount              Int      @default(0)
+  clientsCount                Int      @default(0)
+  invoicesCount               Int      @default(0)
+  quotesCount                 Int      @default(0)
+  cashiersCount               Int      @default(0)
+  inventorySettingsCount      Int      @default(0)
+  resolutionsCount            Int      @default(0)
+  ordersCount                 Int      @default(0)
+  suppliersCount              Int      @default(0)
+  purchasesCount              Int      @default(0)
+  purchaseInvoicesCount       Int      @default(0)
+  purchaseRemisionsCount      Int      @default(0)
+  invoiceReceiptCount         Int      @default(0)
+  creditNotesCount            Int      @default(0)
+  debitNotesCount             Int      @default(0)
+  expensesCount               Int      @default(0)
+  inventoryPriceSettingsCount Int      @default(0)
+  invoiceRemisionsCount       Int      @default(0)
+  legalPosInvoicesCount       Int      @default(0)
+  payrollEmisionCount         Int      @default(0)
+  payrollEmisionTestCount     Int      @default(0)
+  posCreditNotesCount         Int      @default(0)
+
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model InventorySetting {
+  id        Int      @id @default(autoincrement())
+  count     Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  settingType  InventorySettingType     @default(partial)
+  incomeOrExit StockSettingIncomeOrExit @default(income)
+  type         StockSettingType         @default(setting)
+
+  subOrganizationId Int
+  subOrganization   SubOrganization @relation(fields: [subOrganizationId], references: [id], onDelete: Cascade)
+
+  transferToId Int?
+  transferTo   SubOrganization? @relation("transferTo", fields: [transferToId], references: [id])
+
+  organizationId Int
+  organization   Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  products       InventorySettingProduct[]
+}
+
+enum StockSettingType {
+  setting
+  transfer
+}
+
+enum StockSettingIncomeOrExit {
+  income
+  exit
+}
+
+model InventoryPriceSetting {
+  id             Int                            @id @default(autoincrement())
+  createdAt      DateTime                       @default(now())
+  updatedAt      DateTime                       @updatedAt
+  organizationId Int
+  priceListId    Int
+  internalId     Int
+  organization   Organization                   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  priceList      PriceList                      @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+  products       InventoryPriceSettingProduct[]
+}
+
+model InventorySettingProduct {
+  id         Int      @id @default(autoincrement())
+  internalId Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  name     String
+  quantity Float
+  price    Float
+
+  lastStock Float
+  newStock  Float @default(0)
+
+  lastStockInTarget Float @default(0)
+  newStockInTarget  Float @default(0)
+
+  inventorySettingId Int
+  InventorySetting   InventorySetting @relation(fields: [inventorySettingId], references: [id], onDelete: Cascade)
+
+  type      SettingType @default(entry)
+  productId Int?
+  prices    Json[]
+  cost      Float       @default(0)
+  product   Product?    @relation(fields: [productId], references: [id])
+}
+
+model InventoryPriceSettingProduct {
+  id                      Int                    @id @default(autoincrement())
+  internalId              Int
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+  name                    String
+  price                   Float
+  oldPrice                Float
+  productId               Int?
+  inventoryPriceSettingId Int?
+  inventoryPriceSetting   InventoryPriceSetting? @relation(fields: [inventoryPriceSettingId], references: [id])
+  product                 Product?               @relation(fields: [productId], references: [id])
+}
+
+model ErrorLog {
+  id             Int           @id @default(autoincrement())
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  userId         Int?
+  organizationId Int?
+  status         Int           @default(500)
+  error          String
+  url            String
+  storeId        String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  store          Store?        @relation(fields: [storeId], references: [id])
+  user           User?         @relation(fields: [userId], references: [id])
+}
+
+model InvoiceSelection {
+  id                        Int    @id @default(autoincrement())
+  data                      String
+  userId                    Int
+  posData                   Json?
+  legalRemisionData         Json?
+  inventorySettingData      Json?
+  inventoryPriceSettingData Json?
+  creditNote                Json?
+  debitNote                 Json?
+  inventoryPriceSetting     Json?
+  inventorySetting          Json?
+  legalInvoice              Json?
+  legalInvoiceRemision      Json?
+  legalPosInvoice           Json?
+  purchase                  Json?
+  purchaseInvoice           Json?
+  purchaseRemision          Json?
+  quoteInvoice              Json?
+  productsImport            Json?
+  user                      User   @relation(fields: [userId], references: [id])
+}
+
+model DianErrorLog {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  error     String
+  body      String
+  action    String
+}
+
+model ResolutionRequest {
+  id             Int          @id @default(autoincrement())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organizationId Int
+  name           String
+  from           Int?
+  documentKey    String
+  resolutionId   Int
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  resolution     Resolution   @relation(fields: [resolutionId], references: [id], onDelete: Cascade)
+}
+
+model Roles {
+  id             Int             @id @default(autoincrement())
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  name           String
+  description    String?
+  allowedActions AllowedAction[]
+  organizationId Int
+  Invitation     Invitation[]
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  User           User[]
+}
+
+model ExpenseCategory {
+  id             Int          @id @default(autoincrement())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  name           String
+  organizationId Int
+  expenses       Expense[]
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model Expense {
+  id          Int              @id @default(autoincrement())
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  name        String
+  amount      Float
+  description String?
+  subId       Int
+  categoryId  Int?
+  cashierId   Int?
+  origin      ExpenseOrigin    @default(bank)
+  userId      Int
+  cashier     Cashier?         @relation(fields: [cashierId], references: [id])
+  category    ExpenseCategory? @relation(fields: [categoryId], references: [id])
+  subOrg      SubOrganization  @relation(fields: [subId], references: [id])
+  user        User             @relation(fields: [userId], references: [id])
+}
+
+model CartSession {
+  id           Int        @id @default(autoincrement())
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  name         String?
+  email        String?
+  phone        String?
+  address      String?
+  addressExtra String?
+  postalCode   String?
+  department   String?
+  city         String?
+  cartItems    CartItem[]
+}
+
+model CartItem {
+  id            Int         @id @default(autoincrement())
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  productId     Int
+  quantity      Int
+  cartSessionId Int
+  price         Float
+  cartSession   CartSession @relation(fields: [cartSessionId], references: [id])
+  product       Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model InvoiceReceipt {
+  id                                Int          @id @default(autoincrement())
+  internalId                        Int
+  createdAt                         DateTime     @default(now())
+  updatedAt                         DateTime     @updatedAt
+  cufe                              String
+  invoiceJson                       Json?
+  personWhoReceivedId               Int
+  personWhoReceivedTheMerchandiseId Int?
+  organizationId                    Int
+  providerId                        Int?
+  number                            String       @default("")
+  merchantCufe                      String?
+  receiptCufe                       String?
+  organization                      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  personWhoReceived                 User         @relation(fields: [personWhoReceivedId], references: [id])
+  personWhoReceivedTheMerchandise   User?        @relation("personWhoReceivedTheMerchandise", fields: [personWhoReceivedTheMerchandiseId], references: [id])
+  provider                          Supplier?    @relation(fields: [providerId], references: [id], onDelete: Cascade)
+}
+
+model PaymentAgreement {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agreementDate DateTime
+
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  clientId Int?
+  client   Client? @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  supplierId Int?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  purchaseInvoiceId Int?
+  purchaseInvoice   PurchaseInvoice? @relation(fields: [purchaseInvoiceId], references: [id], onDelete: Cascade)
+
+  legalInvoiceId Int?
+  legalInvoice   LegalInvoice? @relation(fields: [legalInvoiceId], references: [id], onDelete: Cascade)
+
+  invoiceRemisionId Int?
+  invoiceRemision   LegalInvoiceRemision? @relation(fields: [invoiceRemisionId], references: [id], onDelete: Cascade)
+}
+
+enum PlanType {
+  entrepreneur
+  max
+  proMax
+  custom
+  free
+}
+
+enum VillingOrganizationType {
+  normal
+  pharmacy
+}
+
+enum stocksProductsBehavior {
+  hide
+  showAsUnavailable
+  allow
+}
+
+enum ResolutionStatus {
+  active
+  pending
+}
+
+enum ResolutionType {
+  legalInvoice
+  posInvoice
+}
+
+enum LegalInvoiceType {
+  loan
+  cash
+}
+
+enum LegalInvoiceStatus {
+  pending
+  paid
+}
+
+enum InvoiceStatus {
+  pending
+  paid
+}
+
+enum SubOrganizationType {
+  store
+  warehouse
+}
+
+enum PaymentMethod {
+  cash
+  credit_card
+  debit_card
+  check
+  transfer
+}
+
+enum LegalInvoicePaymentMethod {
+  cash
+  card
+  transfer
+  loan
+}
+
+enum IvaRegime {
+  simplified
+  common
+  simple
+  iva
+  noIva
+  special
+  ordinary
+  bigTaxPayer
+}
+
+enum TypePerson {
+  natural
+  juridical
+}
+
+enum IdType {
+  CC
+  CE
+  NIT
+  PS
+  TE
+  DIE
+  PEP
+  RC
+}
+
+enum InventorySettingType {
+  partial
+  total
+}
+
+enum SettingType {
+  entry
+  exit
+}
+
+enum typeRegime {
+  iva
+  noIva
+}
+
+enum taxDetail {
+  iva
+  inc
+  ivaAndInc
+  noTax
+}
+
+enum typeLiability {
+  noLiability
+  bigTaxPayer
+  selfRetainer
+  ivaRetentionAgent
+  simpleRegime
+}
+
+enum typeOrganization {
+  natural
+  juridical
+}
+
+enum typeDocumentIdentification {
+  rc
+  ti
+  cc
+  te
+  ce
+  nit
+  ps
+  die
+  nit_ext
+  nuip
+}
+
+enum creditNoteCorrectionsType {
+  return
+  cancel
+  discount
+  priceAdjustment
+  other
+}
+
+enum debitNoteCorrectionsType {
+  interest
+  expenses
+  valueChange
+  other
+}
+
+enum ExpenseOrigin {
+  bank
+  cashier
+}
+
+enum AllowedAction {
+  // stats
+  see_stats
+
+  // invoices
+  see_invoices
+  create_eletronic_invoice
+  create_pos_and_remision
+  cancel_pos_and_remision
+
+  // purchases
+  see_purchases
+  create_purchase
+  cancel_purchase
+
+  // company
+  update_organization
+  update_members
+  delete_member
+  update_clients
+  update_suppliers
+  update_expenses
+
+  // inventory
+  update_products
+  remove_product
+  update_price_in_invoice
+  update_price_list_in_invoice
+  see_stock_settings
+  create_stock_settings
+}
+
+model Employee {
+  id         String    @id @default(uuid())
+  internalId Int
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  startDate  DateTime
+  deletedAt  DateTime?
+
+  name     String
+  surname  String
+  idType   String
+  idNumber String
+  city     String
+  address  String
+  email    String?
+
+  jobTitle     String
+  typeEmployee String
+  hasPension   Boolean @default(false)
+
+  eps              String
+  pensionFund      String
+  redundancyFund   String
+  compensationFund String
+
+  salary           Float
+  isIntegralSalary Boolean @default(false)
+
+  typeContract     String
+  hasTransportHelp Boolean @default(false)
+  isHighRisk       Boolean @default(false)
+
+  paymentMethod String
+  bank          String?
+  accountNumber String?
+  accountType   String?
+
+  organizationId Int
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  templateId     String?
+  template       PayrollTemplate? @relation(fields: [templateId], references: [id])
+
+  payrollEmployees PayrollEmployee[]
+  emissions        PayrollEmission[]
+}
+
+model PayrollTemplate {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name            String
+  salary          Float
+  employees       Employee[]
+  payrollConcepts PayrollConcept[]
+
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model PayrollEmployee {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  salary          Float
+  isSelected      Boolean          @default(false)
+  payrollConcepts PayrollConcept[]
+
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+
+  payrollId String
+  payroll   Payroll @relation(fields: [payrollId], references: [id], onDelete: Cascade)
+
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  emission PayrollEmission?
+}
+
+model Payroll {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  paidAt DateTime?
+  status PayrollStatus @default(draft)
+
+  month      months @default(Enero)
+  year       Int    @default(2024)
+  daysWorked Int    @default(30)
+
+  startDate DateTime
+  endDate   DateTime
+
+  employees PayrollEmployee[]
+
+  organizationId  Int
+  organization    Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  PayrollEmission PayrollEmission[]
+}
+
+enum PayrollStatus {
+  draft
+  missing_emissions
+  emitted
+  emitted_with_errors
+}
+
+model PayrollEmission {
+  id         String   @id @default(uuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  internalId Int
+
+  startDate DateTime
+  endDate   DateTime
+
+  zipKey  String? @unique
+  uuid    String? @unique
+  qr_code String?
+  dian_id String?
+
+  legalJson Json?
+
+  month      months @default(Enero)
+  year       Int    @default(2024)
+  daysWorked Int    @default(30)
+
+  employeeId        String
+  employee          Employee        @relation(fields: [employeeId], references: [id])
+  payrollEmployeeId String          @unique
+  payrollEmployee   PayrollEmployee @relation(fields: [payrollEmployeeId], references: [id])
+  payrollId         String
+  payroll           Payroll         @relation(fields: [payrollId], references: [id], onDelete: Cascade)
+  organizationId    Int
+  organization      Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+enum months {
+  Enero
+  Febrero
+  Marzo
+  Abril
+  Mayo
+  Junio
+  Julio
+  Agosto
+  Septiembre
+  Octubre
+  Noviembre
+  Diciembre
+}
+
+model PayrollConcept {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  keyName          String
+  amount           Float
+  quantity         Float
+  customPercentage Float?
+  type             ConceptType
+
+  payrollTemplate   PayrollTemplate? @relation(fields: [payrollTemplateId], references: [id])
+  payrollTemplateId String?
+
+  payrollEmployee   PayrollEmployee? @relation(fields: [payrollEmployeeId], references: [id])
+  payrollEmployeeId String?
+
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+enum ConceptType {
+  income
+  deduction
+}
+
+model PaymentLinks {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  link          String
+  linkId        String
+  amount        Float
+  paidAt        DateTime?
+  transactionId String?
+
+  organizationId Int
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  payments       PaymentPlan[]
+}

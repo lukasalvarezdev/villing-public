@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "LegalInvoiceProduct" ADD COLUMN     "cost" DOUBLE PRECISION NOT NULL DEFAULT 0;

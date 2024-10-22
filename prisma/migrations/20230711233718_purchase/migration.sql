@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "PurchaseInvoice" ALTER COLUMN "retention" SET DEFAULT 0,
+ALTER COLUMN "retention" SET DATA TYPE DOUBLE PRECISION;

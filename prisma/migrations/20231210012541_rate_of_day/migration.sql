@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Cashier" ADD COLUMN     "rateOfTheDay" DOUBLE PRECISION NOT NULL DEFAULT 0;

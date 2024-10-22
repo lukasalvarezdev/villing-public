@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Resolution" ADD COLUMN     "resolutionDate" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP;

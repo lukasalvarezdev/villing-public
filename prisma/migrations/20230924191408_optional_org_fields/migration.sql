@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Organization" ALTER COLUMN "idNumber" DROP NOT NULL,
+ALTER COLUMN "tel" DROP NOT NULL;

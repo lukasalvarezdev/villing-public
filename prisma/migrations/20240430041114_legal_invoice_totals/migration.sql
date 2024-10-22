@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "LegalInvoice" ADD COLUMN     "total" DOUBLE PRECISION NOT NULL DEFAULT 0;
+
+-- AlterTable
+ALTER TABLE "LegalInvoiceRemision" ADD COLUMN     "total" DOUBLE PRECISION NOT NULL DEFAULT 0;

@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "LegalPosInvoice" ADD COLUMN     "totalChange" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "totalCollected" DOUBLE PRECISION NOT NULL DEFAULT 0;

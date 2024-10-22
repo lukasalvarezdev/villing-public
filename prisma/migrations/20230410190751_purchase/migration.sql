@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "PurchaseInvoice" ADD COLUMN     "receivedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "PurchaseRemision" ADD COLUMN     "receivedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP;
